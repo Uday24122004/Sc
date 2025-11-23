@@ -1,0 +1,90 @@
+# ---------------------------- 
+# STEP 1: Import libraries 
+# ----------------------------
+import numpy as np
+import pandas as pd
+import tensorflow as tf
+import matplotlib.pyplot as plt
+
+# Use tf.compat.v1 to maintain compatibility with TF2
+tf.compat.v1.disable_eager_execution()
+
+# ----------------------------
+# STEP 2: Load Dataset
+# ----------------------------
+url = "https://github.com/ybifoundation/Dataset/raw/main/Salary%20Data.csv"
+data = pd.read_csv(url)
+
+x_data = data['Experience Years'].values.astype(np.float32)
+y_data = data['Salary'].values.astype(np.float32)
+n = len(x_data)
+
+# ----------------------------
+# STEP 3: Plot Training Data
+# ----------------------------
+plt.scatter(x_data, y_data)
+plt.xlabel("Experience Years")
+plt.ylabel("Salary")
+plt.title("Training Data")
+plt.show()
+
+# ----------------------------
+# STEP 4: Define Model Variables
+# ----------------------------
+X = tf.compat.v1.placeholder("float")
+Y = tf.compat.v1.placeholder("float")
+
+W = tf.Variable(np.random.randn(), name="weight", dtype=tf.float32)
+b = tf.Variable(np.random.randn(), name="bias", dtype=tf.float32)
+
+# Hypothesis: y = Wx + b
+y_pred = tf.add(tf.multiply(X, W), b)
+
+# Mean Squared Error
+cost = tf.reduce_sum(tf.pow(y_pred - Y, 2)) / (2 * n)
+
+# Gradient Descent Optimizer
+learning_rate = 0.01
+optimizer = tf.compat.v1.train.GradientDescentOptimizer(learning_rate).minimize(cost)
+
+# Initialize variables
+init = tf.compat.v1.global_variables_initializer()
+
+# ----------------------------
+# STEP 5: Train the Model
+# ----------------------------
+training_epochs = 1000
+
+with tf.compat.v1.Session() as sess:
+    sess.run(init)
+
+    for epoch in range(training_epochs):
+        for (x, y) in zip(x_data, y_data):
+            sess.run(optimizer, feed_dict={X: x, Y: y})
+
+        if (epoch + 1) % 100 == 0:
+            c = sess.run(cost, feed_dict={X: x_data, Y: y_data})
+            w_val, b_val = sess.run([W, b])
+            print(f"Epoch {epoch+1}: cost={c:.4f}, weight={w_val:.4f}, bias={b_val:.4f}")
+
+    # Final values
+    training_cost = sess.run(cost, feed_dict={X: x_data, Y: y_data})
+    weight = sess.run(W)
+    bias = sess.run(b)
+
+    print("\nTraining finished!")
+    print(f"Final Cost = {training_cost:.4f}, Weight = {weight:.4f}, Bias = {bias:.4f}")
+
+    # Predictions
+    predictions = weight * x_data + bias
+
+# ----------------------------
+# STEP 6: Plot Regression Result
+# ----------------------------
+plt.plot(x_data, y_data, 'ro', label='Original Data')
+plt.plot(x_data, predictions, label='Fitted Line')
+plt.xlabel("Experience Years")
+plt.ylabel("Salary")
+plt.title("Linear Regression Result")
+plt.legend()
+plt.show()
